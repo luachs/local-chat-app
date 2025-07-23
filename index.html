@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat LAN</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: #e5ddd5;
+    }
+
+    #name-input {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      flex: 1;
+      padding: 20px;
+    }
+
+    #name-input input {
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      width: 80%;
+      max-width: 300px;
+    }
+
+    #name-input button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+
+    #chat {
+      flex: 1;
+      display: none;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .msg {
+      margin: 6px 0;
+      padding: 10px 14px;
+      border-radius: 18px;
+      max-width: 80%;
+      word-wrap: break-word;
+    }
+
+    .you {
+      align-self: flex-end;
+      background-color: #dcf8c6;
+    }
+
+    .other {
+      align-self: flex-start;
+      background-color: #ffffff;
+    }
+
+    .nickname {
+      font-weight: bold;
+      display: block;
+      margin-bottom: 4px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    #input-area {
+      display: flex;
+      padding: 10px;
+      background: #fff;
+      border-top: 1px solid #ccc;
+    }
+
+    #msg {
+      flex: 1;
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      outline: none;
+    }
+
+    button.send-btn {
+      padding: 10px 16px;
+      margin-left: 10px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+
+    button.send-btn:hover {
+      background-color: #45a049;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nhập tên -->
+  <div id="name-input">
+    <h2>Nhập tên của bạn</h2>
+    <input type="text" id="nickname" placeholder="Ví dụ: Phát" />
+    <button onclick="startChat()">Bắt đầu chat</button>
+  </div>
+
+  <!-- Khu vực chat -->
+  <div id="chat">
+    <div id="messages"></div>
+    <div id="input-area">
+      <input type="text" id="msg" placeholder="Nhập tin nhắn..." autocomplete="off" />
+      <button class="send-btn" onclick="send()">Gửi</button>
+    </div>
+  </div>
+
+  <script>
+    let socket;
+    let myName = "";
+
+    function startChat() {
+      const input = document.getElementById("nickname");
+      const name = input.value.trim();
+      if (!name) {
+        alert("Vui lòng nhập tên!");
+        return;
+      }
+      myName = name;
+
+      // Ẩn phần nhập tên, hiện phần chat
+      document.getElementById("name-input").style.display = "none";
+      document.getElementById("chat").style.display = "flex";
+
+      // Kết nối WebSocket
+      socket = new WebSocket("ws://192.168.1.6:3000"); // 🧠 Đặt đúng IP LAN của server
+
+      socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.name === myName) {
+          addMessage(data.message, "you", "Tôi");
+        } else {
+          addMessage(data.message, "other", data.name);
+        }
+      };
+    }
+
+    function send() {
+      const input = document.getElementById("msg");
+      const message = input.value.trim();
+      if (!message || !socket || socket.readyState !== WebSocket.OPEN) return;
+      socket.send(JSON.stringify({ name: myName, message }));
+      input.value = "";
+    }
+
+    function addMessage(text, type, name) {
+      const div = document.createElement("div");
+      div.className = `msg ${type}`;
+
+      const nick = document.createElement("span");
+      nick.className = "nickname";
+      nick.textContent = name;
+
+      const msg = document.createElement("span");
+      msg.textContent = text;
+
+      div.appendChild(nick);
+      div.appendChild(msg);
+      document.getElementById("messages").appendChild(div);
+
+      // Auto scroll xuống cuối
+      const messagesDiv = document.getElementById("messages");
+      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    }
+
+    // Bấm Enter cũng gửi
+    document.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") {
+        const nameInputVisible = document.getElementById("name-input").style.display !== "none";
+        if (nameInputVisible) {
+          startChat();
+        } else {
+          send();
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
