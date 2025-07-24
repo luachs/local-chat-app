@@ -142,7 +142,10 @@
       document.getElementById("name-input").style.display = "none";
       document.getElementById("chat").style.display = "flex";
 
-      socket = new WebSocket("wss://local-chat-app-production.up.railway.app");
+     const isLocal = location.hostname === "localhost" || location.hostname.startsWith("192.168.");
+      const protocol = isLocal ? "ws" : "wss";
+      const host = location.host;
+      socket = new WebSocket(`${protocol}://${host}`);
 
 
       socket.onmessage = (event) => {

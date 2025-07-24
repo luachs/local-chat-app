@@ -7,8 +7,8 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-// ⚠️ Phục vụ file tĩnh từ thư mục hiện tại
-app.use(express.static(path.join(__dirname)));
+// Phục vụ file tĩnh
+app.use(express.static(path.join(__dirname, 'public')));
 
 // WebSocket xử lý kết nối
 wss.on('connection', (ws) => {
@@ -26,8 +26,7 @@ wss.on('connection', (ws) => {
   });
 });
 
-// 🚀 Khởi động server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Server đang chạy tại http://localhost:${PORT}`);
+  console.log(`Server chạy tại http://localhost:${PORT}`);
 });
