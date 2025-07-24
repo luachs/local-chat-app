@@ -157,7 +157,7 @@
       document.getElementById("chat").style.display = "flex";
 
       // Kết nối WebSocket
-      socket = new WebSocket("ws://192.168.1.6:3000"); // 🧠 Đặt đúng IP LAN của server
+      socket = new WebSocket("wss://local-chat-app-production.up.railway.app/"); // 🧠 Đặt đúng IP LAN của server
 
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
