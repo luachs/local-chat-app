@@ -38,8 +38,9 @@ wss.on('connection', (ws) => {
 });
 
 // 🚀 Chạy server
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server đang chạy tại http://localhost:${PORT}`);
-  console.log(__dirname);
 });
+
+
