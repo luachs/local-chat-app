@@ -2,13 +2,13 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chat LAN</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <style>
     * {
       box-sizing: border-box;
     }
-
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -18,7 +18,6 @@
       height: 100vh;
       background-color: #e5ddd5;
     }
-
     #name-input {
       display: flex;
       flex-direction: column;
@@ -27,7 +26,6 @@
       flex: 1;
       padding: 20px;
     }
-
     #name-input input {
       padding: 12px;
       font-size: 16px;
@@ -36,7 +34,6 @@
       width: 80%;
       max-width: 300px;
     }
-
     #name-input button {
       margin-top: 10px;
       padding: 10px 20px;
@@ -47,14 +44,12 @@
       color: white;
       cursor: pointer;
     }
-
     #chat {
       flex: 1;
       display: none;
       flex-direction: column;
       height: 100%;
     }
-
     #messages {
       flex: 1;
       overflow-y: auto;
@@ -62,7 +57,6 @@
       display: flex;
       flex-direction: column;
     }
-
     .msg {
       margin: 6px 0;
       padding: 10px 14px;
@@ -70,17 +64,14 @@
       max-width: 80%;
       word-wrap: break-word;
     }
-
     .you {
       align-self: flex-end;
       background-color: #dcf8c6;
     }
-
     .other {
       align-self: flex-start;
       background-color: #ffffff;
     }
-
     .nickname {
       font-weight: bold;
       display: block;
@@ -88,14 +79,12 @@
       font-size: 13px;
       color: #555;
     }
-
     #input-area {
       display: flex;
       padding: 10px;
       background: #fff;
       border-top: 1px solid #ccc;
     }
-
     #msg {
       flex: 1;
       padding: 12px;
@@ -104,8 +93,7 @@
       border-radius: 20px;
       outline: none;
     }
-
-    button.send-btn {
+    #sendBtn {
       padding: 10px 16px;
       margin-left: 10px;
       font-size: 16px;
@@ -115,8 +103,7 @@
       border-radius: 20px;
       cursor: pointer;
     }
-
-    button.send-btn:hover {
+    #sendBtn:hover {
       background-color: #45a049;
     }
   </style>
@@ -127,7 +114,7 @@
   <div id="name-input">
     <h2>Nhập tên của bạn</h2>
     <input type="text" id="nickname" placeholder="Ví dụ: Phát" />
-    <button onclick="startChat()">Bắt đầu chat</button>
+    <button id="startBtn">Bắt đầu chat</button>
   </div>
 
   <!-- Khu vực chat -->
@@ -135,7 +122,7 @@
     <div id="messages"></div>
     <div id="input-area">
       <input type="text" id="msg" placeholder="Nhập tin nhắn..." autocomplete="off" />
-      <button class="send-btn" onclick="send()">Gửi</button>
+      <button id="sendBtn">Gửi</button>
     </div>
   </div>
 
@@ -152,20 +139,19 @@
       }
       myName = name;
 
-      // Ẩn phần nhập tên, hiện phần chat
       document.getElementById("name-input").style.display = "none";
       document.getElementById("chat").style.display = "flex";
 
-      // Kết nối WebSocket
-      socket = new WebSocket("wss://local-chat-app-production.up.railway.app/"); // 🧠 Đặt đúng IP LAN của server
+      socket = new WebSocket("wss://local-chat-app-production.up.railway.app");
+
 
       socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        if (data.name === myName) {
-          addMessage(data.message, "you", "Tôi");
-        } else {
-          addMessage(data.message, "other", data.name);
-        }
+        if (!data.name || !data.message) return;
+
+        const sender = data.name === myName ? "you" : "other";
+        const displayName = sender === "you" ? "Tôi" : data.name;
+        addMessage(data.message, sender, displayName);
       };
     }
 
@@ -173,6 +159,7 @@
       const input = document.getElementById("msg");
       const message = input.value.trim();
       if (!message || !socket || socket.readyState !== WebSocket.OPEN) return;
+
       socket.send(JSON.stringify({ name: myName, message }));
       input.value = "";
     }
@@ -190,25 +177,21 @@
 
       div.appendChild(nick);
       div.appendChild(msg);
-      document.getElementById("messages").appendChild(div);
-
-      // Auto scroll xuống cuối
-      const messagesDiv = document.getElementById("messages");
-      messagesDiv.scrollTop = messagesDiv.scrollHeight;
+      const container = document.getElementById("messages");
+      container.appendChild(div);
+      container.scrollTop = container.scrollHeight;
     }
 
-    // Bấm Enter cũng gửi
-    document.addEventListener("keypress", function (e) {
+    // Gắn sự kiện
+    document.getElementById("startBtn").addEventListener("click", startChat);
+    document.getElementById("sendBtn").addEventListener("click", send);
+
+    document.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
-        const nameInputVisible = document.getElementById("name-input").style.display !== "none";
-        if (nameInputVisible) {
-          startChat();
-        } else {
-          send();
-        }
+        const nameVisible = document.getElementById("name-input").style.display !== "none";
+        nameVisible ? startChat() : send();
       }
     });
   </script>
-
 </body>
 </html>

@@ -1,35 +1,35 @@
-const http = require("http");
-const fs = require("fs");
-const path = require("path");
-const WebSocket = require("ws");
+const express = require('express');
+const http = require('http');
+const WebSocket = require('ws');
+const path = require('path');
 
-const server = http.createServer((req, res) => {
-  // Khi user truy cập "/", trả về file index.html
-  if (req.url === "/") {
-    const filePath = path.join(__dirname, "index.html");
-    fs.readFile(filePath, (err, data) => {
-      if (err) {
-        res.writeHead(500);
-        res.end("Error loading index.html");
-      } else {
-        res.writeHead(200, { "Content-Type": "text/html" });
-        res.end(data);
-      }
-    });
-  } else {
-    res.writeHead(404);
-    res.end("Not Found");
-  }
-});
-
-// Tạo WebSocket server
+const app = express();
+const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
-wss.on("connection", (ws) => {
-  ws.on("message", (message) => {
-    console.log("Received: %s", message);
-    // Gửi message lại cho tất cả client
-    wss.clients.forEach(client => {
+// ⚠️ Phục vụ file tĩnh từ thư mục hiện tại (nơi chứa index.html)
+app.use(express.static(path.join(__dirname)));
+
+// WebSocket: Nhận và gửi lại message cho tất cả client đang kết nối
+wss.on('connection', (ws) => {
+  ws.on('message', (message) => {
+    wss.clients.forEach((client) => {
+      if (client.readyState === WebSocket.OPEN) {
+        const text = message.toString('utf8');
+        console.log('📩 Nội dung tin nhắn:', text);
+        client.send(text);
+
+      }
+    });
+  });
+});
+wss.on('connection', (ws) => {
+  console.log('🔌 Client đã kết nối WebSocket');
+
+  ws.on('message', (message) => {
+    console.log('📩 Nhận tin nhắn:', message);
+
+    wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
         client.send(message);
       }
@@ -37,7 +37,9 @@ wss.on("connection", (ws) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+// 🚀 Chạy server
+const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`Server đang chạy tại http://localhost:${PORT}`);
+  console.log(__dirname);
 });
